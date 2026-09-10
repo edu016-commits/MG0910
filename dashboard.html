@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MG 포켓 금리 대시보드</title>
+  <style>
+    :root {
+      --poke-yellow:#ffcb05;
+      --poke-yellow-2:#ffe46b;
+      --poke-blue:#2a75bb;
+      --poke-blue-dark:#1f4f8b;
+      --poke-red:#ef5350;
+      --poke-red-dark:#b92f2c;
+      --ink:#263238;
+      --muted:#6d7b84;
+      --line:#314a60;
+      --paper:#ffffff;
+      --sky:#eaf6ff;
+      --shadow:0 6px 0 rgba(49,74,96,.18),0 18px 34px rgba(28,65,100,.12);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:"Pretendard","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+      color:var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(255,203,5,.28), transparent 18%),
+        radial-gradient(circle at 88% 10%, rgba(42,117,187,.18), transparent 23%),
+        linear-gradient(180deg,#eaf6ff 0%,#f7fbfe 52%,#eef6fa 100%);
+      min-height:100vh;
+    }
+    button{font:inherit;cursor:pointer}
+
+    .hero{
+      position:relative;
+      overflow:hidden;
+      color:#fff;
+      background:linear-gradient(135deg,#246eb0 0%,#3f91ca 56%,#6bb6dd 100%);
+      border-bottom:7px solid var(--poke-yellow);
+      padding:24px 20px 74px;
+    }
+    .hero::before,.hero::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
+    .hero::before{width:360px;height:360px;right:-100px;top:-190px;border:38px solid rgba(255,255,255,.07);background:rgba(255,255,255,.05)}
+    .hero::after{width:220px;height:220px;left:-80px;bottom:-135px;border:28px solid rgba(255,203,5,.12)}
+    .hero-inner{max-width:1180px;margin:auto;position:relative;z-index:2}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:14px}
+    .pokeball{
+      width:54px;height:54px;border-radius:50%;border:4px solid #263238;position:relative;flex:0 0 auto;
+      background:linear-gradient(to bottom,var(--poke-red) 0 44%,#263238 44% 56%,#fff 56% 100%);
+      box-shadow:0 4px 0 rgba(0,0,0,.18)
+    }
+    .pokeball::after{content:"";position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;border:4px solid #263238;left:50%;top:50%;transform:translate(-50%,-50%)}
+    .eyebrow{font-size:11px;font-weight:900;letter-spacing:1.7px;opacity:.86}
+    .brand-title{font-weight:950;font-size:20px;letter-spacing:-.6px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{min-height:44px;border:3px solid #263238;border-radius:999px;padding:9px 16px;font-weight:950;font-size:13px;box-shadow:0 4px 0 #263238;transition:.12s ease;display:inline-flex;align-items:center;gap:8px}
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #263238}
+    .btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+    .btn.primary{background:var(--poke-yellow);color:#263238}
+    .btn.home{background:#fff;color:#263238}
+    .btn.primary::before{content:"⚡"}
+    .btn.home::before{content:"⌂";font-size:17px}
+
+    .hero-copy{margin-top:34px;max-width:720px}
+    .quest-tag{display:inline-block;padding:6px 12px;border:3px solid #263238;border-radius:999px;background:var(--poke-yellow);color:#263238;font-size:11px;font-weight:950;box-shadow:0 3px 0 rgba(38,50,56,.8)}
+    .hero h1{margin:16px 0 8px;font-size:clamp(31px,5vw,50px);line-height:1.05;letter-spacing:-2px;text-shadow:0 3px 0 rgba(0,0,0,.12)}
+    .hero p{margin:0;max-width:620px;color:rgba(255,255,255,.88);font-size:14px;line-height:1.7}
+
+    .wrap{max-width:1180px;margin:-44px auto 0;padding:0 20px 48px;position:relative;z-index:5}
+    .status{
+      margin:0 0 18px;padding:13px 15px;border:3px solid var(--line);border-radius:15px;background:#fff7c4;
+      box-shadow:0 4px 0 rgba(49,74,96,.12);font-size:13px;font-weight:800;display:flex;align-items:center;gap:9px
+    }
+    .status::before{content:"!";width:24px;height:24px;border-radius:50%;border:2px solid var(--line);display:inline-flex;align-items:center;justify-content:center;background:var(--poke-yellow);font-weight:950;flex:0 0 auto}
+
+    .grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr);gap:20px}
+    .card{background:var(--paper);border:3px solid var(--line);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+    .card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px;background:linear-gradient(135deg,#fff3a3,#ffcb05);border-bottom:3px solid var(--line)}
+    .card-head h2{font-size:17px;margin:0;font-weight:950;letter-spacing:-.5px}
+    .card-head small{font-size:10px;font-weight:900;color:#55646e}
+    .dex-badge{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;padding:0 10px;border:3px solid var(--line);border-radius:10px;background:var(--poke-red);color:#fff;font-size:11px;font-weight:950;box-shadow:2px 2px 0 var(--line)}
+    .card-body{padding:20px}
+
+    .chart-shell{position:relative;padding:14px 10px 0}
+    .chart{height:390px;display:flex;align-items:flex-end;gap:22px;padding:32px 12px 48px;border-left:3px solid var(--line);border-bottom:3px solid var(--line);position:relative;background:
+      repeating-linear-gradient(to top, transparent 0 67px, rgba(49,74,96,.08) 67px 69px)}
+    .chart::before{content:"RATE DEX";position:absolute;left:10px;top:9px;font-size:10px;font-weight:950;color:#87949c;letter-spacing:1.2px}
+    .group{flex:1;min-width:86px;height:100%;display:flex;align-items:flex-end;justify-content:center;gap:9px;position:relative}
+    .bar{width:34px;border:2px solid var(--line);border-bottom:0;border-radius:11px 11px 0 0;position:relative;min-height:2px;box-shadow:inset 0 -5px 0 rgba(49,74,96,.08)}
+    .bar.base{background:linear-gradient(180deg,#79b8e4,var(--poke-blue))}
+    .bar.max{background:linear-gradient(180deg,#ffe77b,var(--poke-yellow))}
+    .bar::after{content:"";position:absolute;left:50%;top:8px;transform:translateX(-50%);width:13px;height:13px;border-radius:50%;border:2px solid var(--line);background:#fff}
+    .val{position:absolute;top:-27px;left:50%;transform:translateX(-50%);font-size:11px;font-weight:950;white-space:nowrap;background:#fff;padding:3px 5px;border-radius:7px;border:1px solid #c8d3d9}
+    .label{position:absolute;bottom:-42px;left:50%;transform:translateX(-50%);font-size:11px;white-space:nowrap;text-align:center;font-weight:900;color:#52616b}
+    .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:17px;color:#5e6b73;font-size:12px;font-weight:800}
+    .dot{display:inline-block;width:13px;height:13px;border-radius:50%;margin-right:6px;vertical-align:-2px;border:2px solid var(--line)}
+    .dot.b{background:var(--poke-blue)} .dot.m{background:var(--poke-yellow)}
+
+    .kpis{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .kpi{position:relative;overflow:hidden;min-height:126px;padding:15px;border:3px solid var(--line);border-radius:18px;background:#f7fbfe;box-shadow:0 4px 0 rgba(49,74,96,.12)}
+    .kpi:nth-child(1){background:#fff7c5} .kpi:nth-child(2){background:#d8edfb} .kpi:nth-child(3){background:#f4f8fa} .kpi:nth-child(4){background:#ffe7e7}
+    .kpi::after{content:"";position:absolute;width:62px;height:62px;right:-25px;bottom:-25px;border:10px solid rgba(49,74,96,.09);border-radius:50%}
+    .kpi .t{color:#5c6870;font-size:11px;font-weight:900}
+    .kpi .n{font-size:26px;font-weight:950;margin-top:10px;letter-spacing:-1px}
+    .note{margin-top:14px;padding:12px 13px;border:2px dashed #9eb0ba;border-radius:12px;background:#f5f8fa;color:#687780;font-size:12px;line-height:1.6}
+
+    .table-card{margin-top:20px}
+    .table-wrap{overflow:auto;max-height:520px}
+    table{width:100%;border-collapse:collapse;min-width:1000px;table-layout:auto}
+    th,td{padding:12px 10px;border-bottom:1px solid #dbe4e9;text-align:left;font-size:12px}
+    th{position:sticky;top:0;z-index:2;background:#eaf5fc;color:#4c5f6b;font-weight:950;border-bottom:2px solid var(--line)}
+    tbody tr:nth-child(even){background:#fbfdfe}
+    tbody tr:hover{background:#fff9ce}
+    td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:900;color:var(--poke-blue-dark)}
+    .empty{text-align:center!important;color:var(--muted);padding:34px!important;font-weight:800}
+
+    .footer-note{margin-top:16px;text-align:center;color:#7b8a92;font-size:10px;font-weight:700}
+
+    @media(max-width:860px){
+      .grid{grid-template-columns:1fr}
+      .chart{gap:10px;overflow-x:auto}
+      .group{min-width:96px}
+    }
+    @media(max-width:600px){
+      .hero{padding:18px 14px 66px}
+      .wrap{padding-left:12px;padding-right:12px}
+      .brand-title{font-size:16px}
+      .eyebrow{font-size:9px}
+      .pokeball{width:46px;height:46px}
+      .actions{width:100%}
+      .btn{flex:1;justify-content:center;padding:8px 12px;font-size:12px}
+      .hero-copy{margin-top:25px}
+      .card-body{padding:14px}
+      .kpis{grid-template-columns:1fr}
+      .chart{height:340px}
+    }
+  </style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <div class="topbar">
+      <div class="brand">
+        <div class="pokeball" aria-hidden="true"></div>
+        <div>
+          <div class="eyebrow">MG FINANCE ADVENTURE</div>
+          <div class="brand-title">MG 포켓 금리 대시보드</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="loadBtn" class="btn primary" type="button">데이터불러오기</button>
+        <button id="homeBtn" class="btn home" type="button">홈으로 가기</button>
+      </div>
+    </div>
+    <div class="hero-copy">
+      <span class="quest-tag">DEPOSIT RATE QUEST</span>
+      <h1>금리 포켓몬을<br>한눈에 비교하세요!</h1>
+      <p>Supabase의 <b>financial_deposit_rates</b> 테이블을 불러와 금융기관별 기본금리와 최고우대금리를 포켓몬 도감처럼 비교합니다.</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="status" class="status">‘데이터불러오기’를 클릭하면 Supabase 조회를 시도합니다.</div>
+
+  <div class="grid">
+    <section class="card">
+      <div class="card-head">
+        <div><h2>기관별 금리 배틀</h2><small>기본금리 vs 최고우대금리</small></div>
+        <div class="dex-badge">DEX 01</div>
+      </div>
+      <div class="card-body">
+        <div class="chart-shell">
+          <div id="chart" class="chart"><div class="empty">데이터를 불러오면 그래프가 표시됩니다.</div></div>
+        </div>
+        <div class="legend"><span><i class="dot b"></i>기본금리</span><span><i class="dot m"></i>최고우대금리</span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div><h2>트레이너 요약</h2><small>핵심 금리 스탯</small></div>
+        <div class="dex-badge">STAT</div>
+      </div>
+      <div class="card-body">
+        <div class="kpis">
+          <div class="kpi"><div class="t">포획 데이터</div><div id="count" class="n">-</div></div>
+          <div class="kpi"><div class="t">최고 금리</div><div id="highest" class="n">-</div></div>
+          <div class="kpi"><div class="t">평균 기본금리</div><div id="avgBase" class="n">-</div></div>
+          <div class="kpi"><div class="t">평균 최고금리</div><div id="avgMax" class="n">-</div></div>
+        </div>
+        <div id="summaryNote" class="note">수협처럼 금리가 숫자가 아닌 경우 평균·차트 계산에서 제외합니다.</div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card table-card">
+    <div class="card-head">
+      <div><h2>금리 도감 원본 데이터</h2><small>Supabase 테이블 전체 레코드</small></div>
+      <div class="dex-badge">DEX 02</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>금융기관</th><th>권역</th><th>상품명</th><th>기본금리</th><th>최고우대금리</th><th>우대조건</th><th>비고</th><th>기준일</th></tr></thead>
+        <tbody id="tbody"><tr><td colspan="9" class="empty">아직 데이터를 불러오지 않았습니다.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+  <div class="footer-note">POKÉ RATE DEX · MG FINANCE ADVENTURE</div>
+</main>
+
+<script>
+(() => {
+  const SUPABASE_URL = 'https://rexjesbszxyjgbnizvof.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_QQo2qlO48DyRjVEmgySMFA_nwqvPLwK';
+  const HOME_URL = 'https://edu016-commits.github.io/MG0910/index';
+  const fallback = [
+    {id:1,institution_name:'KB국민은행',sector:'시중은행',product_name:'KB Star 정기예금',base_rate:2.40,max_preferential_rate:3.20,preferential_conditions:'인터넷·KB스타뱅킹 가입, 공시상 별도 복잡한 거래실적 우대조건 없음',rate_note:null,as_of_date:'2026-09-10'},
+    {id:2,institution_name:'신한은행',sector:'시중은행',product_name:'신한 My플러스 정기예금',base_rate:2.55,max_preferential_rate:3.30,preferential_conditions:'최근 6개월 정기예금 미보유 +0.10%p, 소득입금 +0.10%p, 온라인가입·우대쿠폰 적용 가능',rate_note:null,as_of_date:'2026-09-10'},
+    {id:3,institution_name:'신협(덕양신협 사례)',sector:'상호금융',product_name:'정기예금 12개월',base_rate:4.10,max_preferential_rate:4.10,preferential_conditions:'별도 우대조건 미공시, 조합별 금리 상이',rate_note:'덕양신협 사례',as_of_date:'2026-09-10'},
+    {id:4,institution_name:'수협(회원수협)',sector:'상호금융',product_name:'정기예탁금',base_rate:null,max_preferential_rate:null,preferential_conditions:'회원수협별·영업점별·특판별 금리 상이, 가입 당일 확인 필요',rate_note:'조합별 상이',as_of_date:'2026-09-10'},
+    {id:5,institution_name:'SBI저축은행',sector:'저축은행',product_name:'정기예금',base_rate:3.70,max_preferential_rate:3.80,preferential_conditions:'인터넷뱅킹 또는 사이다뱅크 앱 비대면 가입 +0.10%p',rate_note:null,as_of_date:'2026-09-10'},
+    {id:6,institution_name:'OK저축은행',sector:'저축은행',product_name:'OK e-정기예금',base_rate:3.90,max_preferential_rate:3.90,preferential_conditions:'별도 우대조건 없음, 앱·SB톡톡플러스·인터넷뱅킹 가입',rate_note:null,as_of_date:'2026-09-10'}
+  ];
+
+  const $ = id => document.getElementById(id);
+  $('homeBtn').addEventListener('click', () => location.href = HOME_URL);
+  $('loadBtn').addEventListener('click', loadData);
+
+  async function loadData(){
+    const btn = $('loadBtn'); btn.disabled = true; btn.textContent = '불러오는 중...';
+    $('status').textContent = 'Supabase에서 최신 데이터를 조회 중입니다.';
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/financial_deposit_rates?select=*&order=id.asc`, {
+        headers:{apikey:SUPABASE_KEY, Authorization:`Bearer ${SUPABASE_KEY}`}
+      });
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if(!Array.isArray(data) || data.length === 0) throw new Error('조회 결과 없음');
+      render(data);
+      $('status').textContent = `Supabase 실시간 조회 완료: ${data.length}건`;
+    }catch(err){
+      render(fallback);
+      $('status').textContent = `실시간 조회가 제한되어 저장된 스냅샷 ${fallback.length}건을 표시했습니다. (사유: ${err.message})`;
+    }finally{
+      btn.disabled = false; btn.textContent = '데이터불러오기';
+    }
+  }
+
+  function render(data){
+    renderTable(data); renderChart(data); renderKpis(data);
+  }
+
+  function renderTable(data){
+    $('tbody').innerHTML = data.map(r => `
+      <tr>
+        <td>${esc(r.id)}</td><td>${esc(r.institution_name)}</td><td>${esc(r.sector)}</td><td>${esc(r.product_name)}</td>
+        <td class="num">${fmtRate(r.base_rate)}</td><td class="num">${fmtRate(r.max_preferential_rate)}</td>
+        <td>${esc(r.preferential_conditions || '-')}</td><td>${esc(r.rate_note || '-')}</td><td>${esc(r.as_of_date || '-')}</td>
+      </tr>`).join('');
+  }
+
+  function renderChart(data){
+    const numeric = data.filter(r => Number.isFinite(Number(r.base_rate)) && Number.isFinite(Number(r.max_preferential_rate)));
+    const maxVal = Math.max(4.5, ...numeric.map(r => Math.max(Number(r.base_rate), Number(r.max_preferential_rate)))) * 1.08;
+    $('chart').innerHTML = numeric.map(r => {
+      const b = Number(r.base_rate), m = Number(r.max_preferential_rate);
+      return `<div class="group">
+        <div class="bar base" style="height:${(b/maxVal)*100}%"><span class="val">${b.toFixed(2)}%</span></div>
+        <div class="bar max" style="height:${(m/maxVal)*100}%"><span class="val">${m.toFixed(2)}%</span></div>
+        <div class="label">${esc(shortName(r.institution_name))}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderKpis(data){
+    const bases = data.map(r=>Number(r.base_rate)).filter(Number.isFinite);
+    const maxes = data.map(r=>Number(r.max_preferential_rate)).filter(Number.isFinite);
+    const high = maxes.length ? Math.max(...maxes) : null;
+    $('count').textContent = `${data.length}건`;
+    $('highest').textContent = high == null ? '-' : `${high.toFixed(2)}%`;
+    $('avgBase').textContent = bases.length ? `${(bases.reduce((a,b)=>a+b,0)/bases.length).toFixed(2)}%` : '-';
+    $('avgMax').textContent = maxes.length ? `${(maxes.reduce((a,b)=>a+b,0)/maxes.length).toFixed(2)}%` : '-';
+  }
+
+  function fmtRate(v){ const n=Number(v); return Number.isFinite(n) ? `${n.toFixed(2)}%` : '-'; }
+  function shortName(s){ return String(s).replace('(덕양신협 사례)','').replace('(회원수협)',''); }
+  function esc(v){ return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+})();
+</script>
+</body>
+</html>
