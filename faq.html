@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>업무 FAQ 검색 - FAQ DEX</title>
+  <style>
+    :root {
+      --poke-red: #e6433f;
+      --poke-red-dark: #a5282b;
+      --poke-blue: #3a75bb;
+      --poke-blue-dark: #25528c;
+      --poke-yellow: #ffcb05;
+      --poke-yellow-dark: #c79a00;
+      --ink: #243447;
+      --ink-strong: #172536;
+      --paper: #f7fbff;
+      --muted: #6d7b8a;
+      --line: #314a60;
+      --green: #56b870;
+      --shadow: 0 8px 0 rgba(49,74,96,.16);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(255,255,255,.92) 0 80px, transparent 81px),
+        radial-gradient(circle at 85% 20%, rgba(255,203,5,.18) 0 120px, transparent 121px),
+        linear-gradient(180deg, #cdeeff 0%, #eaf7ff 45%, #f7fbff 100%);
+    }
+
+    button, input { font: inherit; }
+
+    button, a { -webkit-tap-highlight-color: transparent; }
+
+    .app-shell {
+      width: min(1080px, calc(100% - 28px));
+      margin: 30px auto 56px;
+    }
+
+    .pokedex {
+      overflow: hidden;
+      border: 4px solid var(--line);
+      border-radius: 26px;
+      background: var(--paper);
+      box-shadow: 0 14px 0 rgba(49,74,96,.22), 0 26px 44px rgba(28,48,70,.18);
+    }
+
+    .topbar {
+      position: relative;
+      min-height: 120px;
+      padding: 22px 24px 20px 150px;
+      background: linear-gradient(180deg, #f2524d 0%, var(--poke-red) 100%);
+      border-bottom: 4px solid var(--line);
+    }
+
+    .lens-wrap {
+      position: absolute;
+      left: 24px;
+      top: 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .lens {
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      border: 5px solid #fff;
+      background:
+        radial-gradient(circle at 35% 30%, #dff8ff 0 15%, #6dd6ff 16% 34%, #2a9ddb 35% 68%, #176293 69% 100%);
+      box-shadow: 0 0 0 4px var(--line), inset 0 -8px 0 rgba(0,0,0,.12);
+    }
+
+    .status-lights {
+      display: flex;
+      gap: 8px;
+      padding-top: 4px;
+    }
+
+    .status-lights span {
+      width: 17px;
+      height: 17px;
+      border: 3px solid var(--line);
+      border-radius: 50%;
+      background: var(--poke-yellow);
+    }
+
+    .status-lights span:nth-child(2) { background: #67d56f; }
+    .status-lights span:nth-child(3) { background: #61b7f5; }
+
+    .title-area {
+      color: #fff;
+      text-shadow: 2px 2px 0 rgba(0,0,0,.14);
+    }
+
+    .eyebrow {
+      margin: 0 0 4px;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .13em;
+      color: #ffeeb5;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.08;
+      letter-spacing: -.045em;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffecec;
+    }
+
+    .home-btn {
+      position: absolute;
+      top: 18px;
+      right: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 112px;
+      height: 43px;
+      padding: 0 16px;
+      border: 3px solid var(--line);
+      border-radius: 999px;
+      background: var(--poke-yellow);
+      color: var(--ink-strong);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 1000;
+      box-shadow: 0 4px 0 var(--poke-yellow-dark);
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+
+    .home-btn:hover { transform: translateY(-1px); }
+    .home-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 var(--poke-yellow-dark);
+    }
+
+    .body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+      padding: 24px;
+      background:
+        linear-gradient(rgba(58,117,187,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(58,117,187,.035) 1px, transparent 1px),
+        #f7fbff;
+      background-size: 28px 28px;
+    }
+
+    .screen {
+      border: 4px solid var(--line);
+      border-radius: 18px 18px 34px 18px;
+      background: #eef8fb;
+      box-shadow: inset 0 0 0 5px #d9e8ee, var(--shadow);
+      padding: 22px;
+    }
+
+    .screen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .screen-label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 14px;
+      font-weight: 1000;
+      color: var(--ink-strong);
+    }
+
+    .screen-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--poke-red);
+      border: 2px solid var(--line);
+    }
+
+    .dex-number {
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--muted);
+      letter-spacing: .08em;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .search-wrap {
+      position: relative;
+    }
+
+    .search-ball {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--line);
+      border-radius: 50%;
+      overflow: hidden;
+      background: linear-gradient(#ef5350 0 46%, var(--line) 46% 56%, #fff 56% 100%);
+      pointer-events: none;
+    }
+
+    .search-ball::after {
+      content: "";
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%);
+      border: 2px solid var(--line);
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    #searchInput {
+      width: 100%;
+      height: 56px;
+      padding: 0 16px 0 48px;
+      border: 3px solid var(--line);
+      border-radius: 13px;
+      outline: none;
+      background: #fff;
+      color: var(--ink-strong);
+      font-weight: 700;
+      box-shadow: inset 0 -3px 0 rgba(49,74,96,.08);
+    }
+
+    #searchInput:focus {
+      border-color: var(--poke-blue);
+      box-shadow: 0 0 0 4px rgba(58,117,187,.18);
+    }
+
+    #searchInput::placeholder {
+      color: #93a1af;
+      font-weight: 600;
+    }
+
+    .all-btn {
+      height: 56px;
+      padding: 0 20px;
+      border: 3px solid var(--line);
+      border-radius: 13px;
+      background: var(--poke-blue);
+      color: #fff;
+      font-weight: 1000;
+      box-shadow: 0 4px 0 var(--poke-blue-dark);
+    }
+
+    .all-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 var(--poke-blue-dark);
+    }
+
+    .filter-box {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 3px dashed #b9c9d4;
+    }
+
+    .filter-title {
+      margin-bottom: 9px;
+      font-size: 12px;
+      font-weight: 1000;
+      color: var(--muted);
+      letter-spacing: .08em;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+    }
+
+    .filter-btn {
+      min-width: 70px;
+      height: 39px;
+      padding: 0 14px;
+      border: 3px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 900;
+      box-shadow: 0 3px 0 rgba(49,74,96,.2);
+    }
+
+    .filter-btn:hover { background: #f2f7fb; }
+
+    .filter-btn.active {
+      background: var(--poke-yellow);
+      color: var(--ink-strong);
+      box-shadow: 0 3px 0 var(--poke-yellow-dark);
+    }
+
+    .results-panel {
+      border: 4px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .results-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 4px solid var(--line);
+      background: linear-gradient(180deg, #fff6b6 0%, #ffe768 100%);
+    }
+
+    .results-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0;
+      font-size: 17px;
+      font-weight: 1000;
+      color: var(--ink-strong);
+    }
+
+    .tiny-ball {
+      width: 21px;
+      height: 21px;
+      border: 2px solid var(--line);
+      border-radius: 50%;
+      background: linear-gradient(#ef5350 0 45%, var(--line) 45% 56%, white 56%);
+    }
+
+    .result-count {
+      padding: 6px 10px;
+      border: 2px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    #countValue {
+      color: var(--poke-red-dark);
+      font-size: 14px;
+    }
+
+    .results {
+      display: grid;
+      gap: 13px;
+      padding: 18px;
+      background: #edf6fb;
+    }
+
+    .faq-card {
+      position: relative;
+      overflow: hidden;
+      border: 3px solid var(--line);
+      border-radius: 15px;
+      background: #fff;
+      box-shadow: 0 4px 0 rgba(49,74,96,.15);
+    }
+
+    .faq-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 7px;
+      background: var(--poke-red);
+    }
+
+    .faq-inner {
+      padding: 17px 18px 17px 23px;
+    }
+
+    .faq-topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .question {
+      margin: 0;
+      color: var(--ink-strong);
+      font-size: 16px;
+      line-height: 1.55;
+      font-weight: 1000;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      min-width: 54px;
+      padding: 6px 10px;
+      border: 2px solid var(--line);
+      border-radius: 999px;
+      background: #e6f2ff;
+      color: var(--poke-blue-dark);
+      font-size: 11px;
+      font-weight: 1000;
+      text-align: center;
+    }
+
+    .answer-label {
+      display: inline-block;
+      margin: 14px 0 7px;
+      padding: 4px 8px;
+      border-radius: 7px;
+      background: #edf1f5;
+      color: #5e6c7a;
+      font-size: 10px;
+      font-weight: 1000;
+      letter-spacing: .08em;
+    }
+
+    .answer {
+      margin: 0;
+      white-space: pre-wrap;
+      color: #415061;
+      font-size: 14px;
+      line-height: 1.75;
+      font-weight: 650;
+    }
+
+    mark {
+      padding: 1px 2px;
+      border-radius: 3px;
+      background: var(--poke-yellow);
+      color: inherit;
+      box-shadow: inset 0 -2px 0 rgba(199,154,0,.25);
+    }
+
+    .empty-state {
+      display: none;
+      margin: 18px;
+      padding: 36px 22px;
+      border: 3px dashed #8ea3b2;
+      border-radius: 15px;
+      background:
+        radial-gradient(circle at center 34%, rgba(58,117,187,.08) 0 50px, transparent 51px),
+        #f8fbfd;
+      text-align: center;
+      color: #5b6877;
+      line-height: 1.7;
+    }
+
+    .empty-ball {
+      position: relative;
+      width: 58px;
+      height: 58px;
+      margin: 0 auto 15px;
+      border: 4px solid var(--line);
+      border-radius: 50%;
+      background: linear-gradient(#ef5350 0 45%, var(--line) 45% 55%, white 55%);
+    }
+
+    .empty-ball::after {
+      content: "?";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%,-50%);
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border: 3px solid var(--line);
+      border-radius: 50%;
+      background: #fff;
+      color: var(--ink-strong);
+      font-size: 12px;
+      font-weight: 1000;
+    }
+
+    .empty-state strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--ink-strong);
+      font-size: 16px;
+    }
+
+    .data-note {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 3px solid var(--line);
+      border-radius: 12px;
+      background: #fff7d1;
+      color: #715b10;
+      font-size: 12px;
+      line-height: 1.65;
+      font-weight: 700;
+    }
+
+    .data-note[hidden] { display: none; }
+
+    .bottom-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 18px 22px 21px;
+      background: #e9f2f6;
+      border-top: 4px solid var(--line);
+    }
+
+    .dpad {
+      position: relative;
+      width: 74px;
+      height: 74px;
+    }
+
+    .dpad::before,
+    .dpad::after {
+      content: "";
+      position: absolute;
+      background: #26394b;
+      border: 3px solid #172536;
+      border-radius: 7px;
+    }
+
+    .dpad::before {
+      width: 28px;
+      height: 74px;
+      left: 23px;
+      top: 0;
+    }
+
+    .dpad::after {
+      width: 74px;
+      height: 28px;
+      left: 0;
+      top: 23px;
+    }
+
+    .device-note {
+      flex: 1;
+      max-width: 560px;
+      padding: 12px 16px;
+      border: 3px solid var(--line);
+      border-radius: 10px;
+      background: #cfe8c9;
+      color: #2e5130;
+      font-size: 11px;
+      line-height: 1.6;
+      font-weight: 800;
+    }
+
+    .ab-buttons {
+      display: flex;
+      gap: 14px;
+    }
+
+    .ab-buttons span {
+      width: 45px;
+      height: 45px;
+      display: grid;
+      place-items: center;
+      border: 3px solid var(--line);
+      border-radius: 50%;
+      background: var(--poke-red);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 1000;
+      box-shadow: 0 4px 0 var(--poke-red-dark);
+    }
+
+    @media (max-width: 700px) {
+      .app-shell {
+        width: min(100% - 16px, 1080px);
+        margin-top: 10px;
+      }
+
+      .topbar {
+        padding: 108px 16px 18px;
+      }
+
+      .lens-wrap {
+        left: 18px;
+        top: 16px;
+      }
+
+      .home-btn {
+        right: 14px;
+        top: 22px;
+      }
+
+      .body {
+        padding: 13px;
+      }
+
+      .screen {
+        padding: 15px;
+      }
+
+      .search-row {
+        grid-template-columns: 1fr;
+      }
+
+      .all-btn {
+        width: 100%;
+      }
+
+      .faq-topline {
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .bottom-controls {
+        padding: 14px;
+      }
+
+      .dpad,
+      .ab-buttons {
+        display: none;
+      }
+
+      .device-note {
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="pokedex">
+      <header class="topbar">
+        <div class="lens-wrap" aria-hidden="true">
+          <div class="lens"></div>
+          <div class="status-lights">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="title-area">
+          <p class="eyebrow">FAQ DEX · INTERNAL GUIDE</p>
+          <h1>업무 FAQ 검색</h1>
+          <p class="subtitle">등록된 FAQ 데이터 안에서만 답변을 찾아드립니다.</p>
+        </div>
+
+        <a
+          class="home-btn"
+          href="https://edu016-commits.github.io/MG0910/index"
+          aria-label="홈으로 이동"
+        >⌂ HOME</a>
+      </header>
+
+      <div class="body">
+        <section class="screen" aria-label="FAQ 검색 도구">
+          <div class="screen-header">
+            <div class="screen-label">
+              <span class="screen-dot"></span>
+              SEARCH MODE
+            </div>
+            <div class="dex-number">DEX-FAQ 001</div>
+          </div>
+
+          <div class="search-row">
+            <div class="search-wrap">
+              <span class="search-ball" aria-hidden="true"></span>
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="질문이나 키워드를 입력하세요."
+                autocomplete="off"
+                aria-label="FAQ 검색어 입력"
+              />
+            </div>
+            <button id="showAllBtn" class="all-btn" type="button">전체보기</button>
+          </div>
+
+          <div class="filter-box">
+            <div class="filter-title">TYPE FILTER</div>
+            <div class="filters" aria-label="FAQ 분류 필터">
+              <button type="button" class="filter-btn active" data-category="전체">전체</button>
+              <button type="button" class="filter-btn" data-category="교육">교육</button>
+              <button type="button" class="filter-btn" data-category="문서">문서</button>
+              <button type="button" class="filter-btn" data-category="IT">IT</button>
+              <button type="button" class="filter-btn" data-category="보안">보안</button>
+            </div>
+          </div>
+
+          <div class="data-note" id="dataNote" hidden>
+            현재 HTML에는 FAQ 원본 데이터가 포함되지 않았습니다.
+            실제 JSON 데이터가 제공되면 FAQ_DATA_RAW 배열에 원본 내용만 그대로 반영할 수 있습니다.
+          </div>
+        </section>
+
+        <section class="results-panel">
+          <div class="results-head">
+            <h2 class="results-title">
+              <span class="tiny-ball" aria-hidden="true"></span>
+              검색 결과
+            </h2>
+            <div class="result-count">
+              FOUND <span id="countValue">0</span>
+            </div>
+          </div>
+
+          <div id="results" class="results" aria-live="polite"></div>
+
+          <div id="emptyState" class="empty-state" aria-live="polite">
+            <div class="empty-ball" aria-hidden="true"></div>
+            <strong>등록된 FAQ에서 답변을 찾을 수 없습니다.</strong>
+            관련 담당부서 또는 공식 안내자료를 확인해 주세요.
+          </div>
+
+          <div class="bottom-controls" aria-hidden="true">
+            <div class="dpad"></div>
+            <div class="device-note">
+              SAFE SEARCH MODE · 등록된 FAQ만 표시하며, 검색 결과가 없을 때 임의 답변을 생성하지 않습니다.
+            </div>
+            <div class="ab-buttons"><span>A</span><span>B</span></div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      /*
+        FAQ 원본 데이터 영역
+        - FAQ에 없는 답변을 새로 만들지 않습니다.
+        - 현재 원본 JSON이 확인되지 않아 빈 배열로 유지합니다.
+        - JSON 데이터가 제공되면 이 배열만 원본 그대로 교체하면 됩니다.
+
+        지원 필드 예:
+        질문: question / 질문 / q / title
+        답변: answer / 답변 / a / content
+        분류: category / 분류 / type
+      */
+      const FAQ_DATA_RAW = [];
+
+      const ALLOWED_CATEGORIES = ["교육", "문서", "IT", "보안"];
+
+      const normalizedFaqs = Array.isArray(FAQ_DATA_RAW)
+        ? FAQ_DATA_RAW.map(normalizeFaq).filter(isValidFaq)
+        : [];
+
+      const searchInput = document.getElementById("searchInput");
+      const filters = [...document.querySelectorAll(".filter-btn")];
+      const results = document.getElementById("results");
+      const emptyState = document.getElementById("emptyState");
+      const countValue = document.getElementById("countValue");
+      const showAllBtn = document.getElementById("showAllBtn");
+      const dataNote = document.getElementById("dataNote");
+
+      let activeCategory = "전체";
+
+      if (normalizedFaqs.length === 0) {
+        dataNote.hidden = false;
+      }
+
+      function normalizeFaq(item) {
+        if (!item || typeof item !== "object") return null;
+
+        const question =
+          item.question ?? item["질문"] ?? item.q ?? item.title ?? "";
+        const answer =
+          item.answer ?? item["답변"] ?? item.a ?? item.content ?? "";
+        const category =
+          item.category ?? item["분류"] ?? item.type ?? "";
+
+        return {
+          question: String(question).trim(),
+          answer: String(answer).trim(),
+          category: String(category).trim()
+        };
+      }
+
+      function isValidFaq(faq) {
+        return (
+          faq &&
+          faq.question &&
+          faq.answer &&
+          ALLOWED_CATEGORIES.includes(faq.category)
+        );
+      }
+
+      function normalizeText(value) {
+        return String(value ?? "").toLocaleLowerCase("ko-KR").trim();
+      }
+
+      function render() {
+        const keyword = searchInput.value.trim();
+        const normalizedKeyword = normalizeText(keyword);
+
+        const filtered = normalizedFaqs.filter((faq) => {
+          const categoryMatch =
+            activeCategory === "전체" || faq.category === activeCategory;
+
+          if (!categoryMatch) return false;
+          if (!normalizedKeyword) return true;
+
+          const searchableText = normalizeText(
+            `${faq.question} ${faq.answer} ${faq.category}`
+          );
+
+          return searchableText.includes(normalizedKeyword);
+        });
+
+        results.replaceChildren();
+        countValue.textContent = filtered.length.toLocaleString("ko-KR");
+
+        if (filtered.length === 0) {
+          emptyState.style.display = "block";
+          return;
+        }
+
+        emptyState.style.display = "none";
+        const fragment = document.createDocumentFragment();
+
+        filtered.forEach((faq) => {
+          const card = document.createElement("article");
+          card.className = "faq-card";
+
+          const inner = document.createElement("div");
+          inner.className = "faq-inner";
+
+          const topLine = document.createElement("div");
+          topLine.className = "faq-topline";
+
+          const question = document.createElement("h3");
+          question.className = "question";
+          question.appendChild(buildHighlightedText(faq.question, keyword));
+
+          const badge = document.createElement("span");
+          badge.className = "badge";
+          badge.textContent = faq.category;
+
+          topLine.append(question, badge);
+
+          const answerLabel = document.createElement("div");
+          answerLabel.className = "answer-label";
+          answerLabel.textContent = "ANSWER";
+
+          const answer = document.createElement("p");
+          answer.className = "answer";
+          answer.appendChild(buildHighlightedText(faq.answer, keyword));
+
+          inner.append(topLine, answerLabel, answer);
+          card.appendChild(inner);
+          fragment.appendChild(card);
+        });
+
+        results.appendChild(fragment);
+      }
+
+      function buildHighlightedText(text, keyword) {
+        const fragment = document.createDocumentFragment();
+        const source = String(text);
+
+        if (!keyword.trim()) {
+          fragment.appendChild(document.createTextNode(source));
+          return fragment;
+        }
+
+        const escaped = escapeRegExp(keyword.trim());
+        const regex = new RegExp(`(${escaped})`, "gi");
+        const parts = source.split(regex);
+        const target = keyword.trim().toLocaleLowerCase("ko-KR");
+
+        parts.forEach((part) => {
+          if (part.toLocaleLowerCase("ko-KR") === target) {
+            const mark = document.createElement("mark");
+            mark.textContent = part;
+            fragment.appendChild(mark);
+          } else {
+            fragment.appendChild(document.createTextNode(part));
+          }
+        });
+
+        return fragment;
+      }
+
+      function escapeRegExp(value) {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+
+      function setCategory(category) {
+        activeCategory = category;
+
+        filters.forEach((button) => {
+          const isActive = button.dataset.category === category;
+          button.classList.toggle("active", isActive);
+          button.setAttribute("aria-pressed", String(isActive));
+        });
+
+        render();
+      }
+
+      filters.forEach((button) => {
+        button.addEventListener("click", () => {
+          setCategory(button.dataset.category);
+        });
+      });
+
+      searchInput.addEventListener("input", render);
+
+      showAllBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        setCategory("전체");
+        searchInput.focus();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
