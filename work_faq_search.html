@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>업무 FAQ 검색</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --text: #172033;
+      --muted: #667085;
+      --line: #dfe5ec;
+      --primary: #1769e0;
+      --primary-dark: #0f51b5;
+      --primary-soft: #eaf2ff;
+      --mark: #fff0a8;
+      --shadow: 0 12px 32px rgba(27, 39, 51, 0.08);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family:
+        "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo",
+        "Malgun Gothic", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(1000px, calc(100% - 32px));
+      margin: 48px auto;
+    }
+
+    .hero {
+      margin-bottom: 22px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: 0.08em;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.2;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin: 10px 0 0;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .search-wrap {
+      position: relative;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      color: #8490a3;
+      pointer-events: none;
+    }
+
+    #searchInput {
+      width: 100%;
+      height: 52px;
+      padding: 0 16px 0 47px;
+      border: 1px solid #cfd7e3;
+      border-radius: 12px;
+      outline: none;
+      color: var(--text);
+      background: #fff;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    #searchInput::placeholder {
+      color: #98a2b3;
+    }
+
+    #searchInput:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(23, 105, 224, 0.11);
+    }
+
+    .all-button {
+      min-width: 112px;
+      height: 52px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      padding: 0 18px;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .all-button:hover {
+      background: var(--primary-dark);
+    }
+
+    .all-button:active {
+      transform: translateY(1px);
+    }
+
+    .filter-section {
+      margin-top: 20px;
+    }
+
+    .section-label {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #485468;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      min-height: 38px;
+      padding: 8px 15px;
+      border: 1px solid #d5dce7;
+      border-radius: 999px;
+      background: #fff;
+      color: #4d596c;
+      font-weight: 700;
+      transition: 0.15s ease;
+    }
+
+    .filter-btn:hover {
+      border-color: #aebbd0;
+      background: #f9fbfd;
+    }
+
+    .filter-btn.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 28px 0 12px;
+    }
+
+    .result-title {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .result-count {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    #countValue {
+      color: var(--primary);
+      font-weight: 900;
+    }
+
+    .results {
+      display: grid;
+      gap: 12px;
+    }
+
+    .faq-card {
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      box-shadow: 0 5px 18px rgba(27, 39, 51, 0.05);
+    }
+
+    .faq-topline {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .question {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.55;
+      letter-spacing: -0.02em;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #eef2f6;
+      color: #536174;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .answer-label {
+      margin: 15px 0 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .answer {
+      margin: 0;
+      white-space: pre-wrap;
+      line-height: 1.75;
+      color: #344054;
+    }
+
+    mark {
+      background: var(--mark);
+      color: inherit;
+      border-radius: 3px;
+      padding: 0 1px;
+    }
+
+    .empty-state {
+      display: none;
+      padding: 42px 24px;
+      text-align: center;
+      border: 1px dashed #c8d1dd;
+      border-radius: 14px;
+      background: var(--surface-soft);
+      color: #596579;
+      line-height: 1.75;
+    }
+
+    .empty-state strong {
+      display: block;
+      margin-bottom: 8px;
+      color: #344054;
+      font-size: 17px;
+    }
+
+    .data-note {
+      margin-top: 14px;
+      padding: 13px 15px;
+      border-radius: 10px;
+      background: #fff8e6;
+      color: #7a5a00;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .data-note[hidden] {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      .app {
+        width: min(100% - 20px, 1000px);
+        margin: 24px auto;
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .search-row {
+        grid-template-columns: 1fr;
+      }
+
+      .all-button {
+        width: 100%;
+      }
+
+      .faq-topline {
+        flex-direction: column;
+        gap: 9px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <p class="eyebrow">INTERNAL FAQ</p>
+      <h1>업무 FAQ 검색</h1>
+      <p>등록된 FAQ 범위 안에서 질문이나 키워드를 빠르게 찾아보세요.</p>
+    </header>
+
+    <section class="panel" aria-label="FAQ 검색 도구">
+      <div class="search-row">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="m21 21-4.35-4.35m2.35-5.15A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="질문이나 키워드를 입력하세요."
+            autocomplete="off"
+            aria-label="FAQ 검색어 입력"
+          />
+        </div>
+        <button id="showAllBtn" class="all-button" type="button">전체보기</button>
+      </div>
+
+      <div class="filter-section">
+        <span class="section-label">분류</span>
+        <div class="filters" id="categoryFilters" aria-label="FAQ 분류 필터">
+          <button type="button" class="filter-btn active" data-category="전체">전체</button>
+          <button type="button" class="filter-btn" data-category="교육">교육</button>
+          <button type="button" class="filter-btn" data-category="문서">문서</button>
+          <button type="button" class="filter-btn" data-category="IT">IT</button>
+          <button type="button" class="filter-btn" data-category="보안">보안</button>
+        </div>
+      </div>
+
+      <div class="data-note" id="dataNote" hidden>
+        현재 HTML에는 FAQ 원본 데이터가 포함되지 않았습니다.
+        첨부 JSON이 확인되면 아래 FAQ_DATA_RAW에 원본 데이터만 그대로 반영하면 됩니다.
+      </div>
+
+      <div class="result-header">
+        <h2 class="result-title">검색 결과</h2>
+        <div class="result-count">총 <span id="countValue">0</span>건</div>
+      </div>
+
+      <div id="results" class="results" aria-live="polite"></div>
+
+      <div id="emptyState" class="empty-state" aria-live="polite">
+        <strong>등록된 FAQ에서 답변을 찾을 수 없습니다.</strong>
+        관련 담당부서 또는 공식 안내자료를 확인해 주세요.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      /*
+        ============================================================
+        FAQ 원본 데이터 영역
+        ------------------------------------------------------------
+        중요:
+        - FAQ에 없는 답변을 새로 만들지 않습니다.
+        - 현재 대화에서 첨부 JSON 파일이 확인되지 않아 빈 배열입니다.
+        - JSON이 전달되면 원본 데이터만 이 변수에 넣어 사용하세요.
+
+        지원 예시 필드명:
+        질문: question / 질문 / q / title
+        답변: answer / 답변 / a / content
+        분류: category / 분류 / type
+        ============================================================
+      */
+      const FAQ_DATA_RAW = [];
+
+      const ALLOWED_CATEGORIES = ["교육", "문서", "IT", "보안"];
+
+      const normalizedFaqs = Array.isArray(FAQ_DATA_RAW)
+        ? FAQ_DATA_RAW.map(normalizeFaq).filter(isValidFaq)
+        : [];
+
+      const searchInput = document.getElementById("searchInput");
+      const filters = [...document.querySelectorAll(".filter-btn")];
+      const results = document.getElementById("results");
+      const emptyState = document.getElementById("emptyState");
+      const countValue = document.getElementById("countValue");
+      const showAllBtn = document.getElementById("showAllBtn");
+      const dataNote = document.getElementById("dataNote");
+
+      let activeCategory = "전체";
+
+      if (normalizedFaqs.length === 0) {
+        dataNote.hidden = false;
+      }
+
+      function normalizeFaq(item) {
+        if (!item || typeof item !== "object") return null;
+
+        const question =
+          item.question ?? item["질문"] ?? item.q ?? item.title ?? "";
+        const answer =
+          item.answer ?? item["답변"] ?? item.a ?? item.content ?? "";
+        const category =
+          item.category ?? item["분류"] ?? item.type ?? "";
+
+        return {
+          question: String(question).trim(),
+          answer: String(answer).trim(),
+          category: String(category).trim()
+        };
+      }
+
+      function isValidFaq(faq) {
+        return (
+          faq &&
+          faq.question &&
+          faq.answer &&
+          ALLOWED_CATEGORIES.includes(faq.category)
+        );
+      }
+
+      function normalizeText(value) {
+        return String(value ?? "").toLocaleLowerCase("ko-KR").trim();
+      }
+
+      function render() {
+        const keyword = searchInput.value.trim();
+        const normalizedKeyword = normalizeText(keyword);
+
+        const filtered = normalizedFaqs.filter((faq) => {
+          const categoryMatch =
+            activeCategory === "전체" || faq.category === activeCategory;
+
+          if (!categoryMatch) return false;
+          if (!normalizedKeyword) return true;
+
+          const searchableText = normalizeText(
+            `${faq.question} ${faq.answer} ${faq.category}`
+          );
+
+          return searchableText.includes(normalizedKeyword);
+        });
+
+        results.replaceChildren();
+        countValue.textContent = filtered.length.toLocaleString("ko-KR");
+
+        if (filtered.length === 0) {
+          emptyState.style.display = "block";
+          return;
+        }
+
+        emptyState.style.display = "none";
+
+        const fragment = document.createDocumentFragment();
+
+        filtered.forEach((faq) => {
+          const card = document.createElement("article");
+          card.className = "faq-card";
+
+          const topLine = document.createElement("div");
+          topLine.className = "faq-topline";
+
+          const question = document.createElement("h3");
+          question.className = "question";
+          question.appendChild(buildHighlightedText(faq.question, keyword));
+
+          const badge = document.createElement("span");
+          badge.className = "badge";
+          badge.textContent = faq.category;
+
+          topLine.append(question, badge);
+
+          const answerLabel = document.createElement("div");
+          answerLabel.className = "answer-label";
+          answerLabel.textContent = "답변";
+
+          const answer = document.createElement("p");
+          answer.className = "answer";
+          answer.appendChild(buildHighlightedText(faq.answer, keyword));
+
+          card.append(topLine, answerLabel, answer);
+          fragment.appendChild(card);
+        });
+
+        results.appendChild(fragment);
+      }
+
+      function buildHighlightedText(text, keyword) {
+        const fragment = document.createDocumentFragment();
+        const source = String(text);
+
+        if (!keyword.trim()) {
+          fragment.appendChild(document.createTextNode(source));
+          return fragment;
+        }
+
+        const escaped = escapeRegExp(keyword.trim());
+        const regex = new RegExp(`(${escaped})`, "gi");
+        const parts = source.split(regex);
+
+        parts.forEach((part) => {
+          if (part.toLocaleLowerCase("ko-KR") === keyword.trim().toLocaleLowerCase("ko-KR")) {
+            const mark = document.createElement("mark");
+            mark.textContent = part;
+            fragment.appendChild(mark);
+          } else {
+            fragment.appendChild(document.createTextNode(part));
+          }
+        });
+
+        return fragment;
+      }
+
+      function escapeRegExp(value) {
+        return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      }
+
+      function setCategory(category) {
+        activeCategory = category;
+
+        filters.forEach((button) => {
+          const isActive = button.dataset.category === category;
+          button.classList.toggle("active", isActive);
+          button.setAttribute("aria-pressed", String(isActive));
+        });
+
+        render();
+      }
+
+      filters.forEach((button) => {
+        button.addEventListener("click", () => {
+          setCategory(button.dataset.category);
+        });
+      });
+
+      searchInput.addEventListener("input", render);
+
+      showAllBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        setCategory("전체");
+        searchInput.focus();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
